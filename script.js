@@ -21,7 +21,7 @@ let deleteIndex = null;
 let editIndex = null;
 let todos = [];
 
-// Initialize vars do DOOM
+// Initialize vars DOOM
 const createButton = document.getElementById('create-new');
 const editModal = new bootstrap.Modal(document.getElementById('editModal'));
 const itemCategory = document.getElementById('item-category');
@@ -82,7 +82,7 @@ function loadFromFirebase() {
                 // Transform obj in array
                 todos = Object.entries(data).map(([id, todo]) => ({ id, ...todo }));
             } else {
-                todos = []; // if don't have info Initialize empty array
+                todos = []; // If don't have info Initialize empty array
             }
             renderItems(); // Rerender list
         });
@@ -123,7 +123,7 @@ function renderItems() {
                 'justify-content-between'
             );
 
-            // Se não houver imagem, gerar as iniciais
+            // If dont have img put letters
             let imageContent;
             if (todo.image) {
                 imageContent = `<img src="${todo.image}" class="item-img" alt="Imagem" class="rounded-circle img-thumbnail" onclick="showImageModal('${todo.image}')">`;
@@ -180,22 +180,22 @@ function saveItem() {
         getBase64(itemImage.files[0], base64Image => {
             newTodo.image = base64Image;
             if (editIndex) {
-                saveToFirebase(newTodo, editIndex); // Editar o item no Firebase
+                saveToFirebase(newTodo, editIndex); // Edit item Firebase
             } else {
-                saveToFirebase(newTodo); // Salvar novo item no Firebase
+                saveToFirebase(newTodo); // Save new item Firebase
             }
-            editIndex = null; // Resetar o índice de edição
+            editIndex = null; // Reset index edit
             editModal.hide();
         });
     } else {
         if (editIndex) {
-            newTodo.image = todos.find(todo => todo.id === editIndex).image; // Manter a imagem original ao editar
-            saveToFirebase(newTodo, editIndex); // Editar o item no Firebase
+            newTodo.image = todos.find(todo => todo.id === editIndex).image;
+            saveToFirebase(newTodo, editIndex); // Edit item Firebase
         } else {
-            newTodo.image = ''; // Definir imagem como vazia para novos itens sem imagem
-            saveToFirebase(newTodo); // Salvar novo item no Firebase
+            newTodo.image = ''; // No Image in new items
+            saveToFirebase(newTodo); // Save new item Firebase
         }
-        editIndex = null; // Resetar o índice de edição
+        editIndex = null; // Reset index edit
         editModal.hide();
     }
 }
