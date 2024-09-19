@@ -1,0 +1,88 @@
+body {
+    background-color: #d1d2d4;
+}
+
+#todo-list img {
+    max-width: 100px;
+}
+
+.list-group {
+    gap: 5px;
+    max-height: fit-content;
+    overflow-y: auto;
+    min-height: 200px;
+}
+
+.actions {
+    display: flex;
+    align-items: center;  /* Alinha os itens ao centro */
+    gap: 10px;  /* Adiciona espaço entre os botões */
+}
+
+.item-img {
+    width: 100px;
+    height: auto;
+}
+
+.item-midle-area-size {
+    width: 80%;
+}
+
+.desc-size {
+    width: 86%;
+}
+
+.create-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 20%;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.create-new {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 20%;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.modal-footer .btn {
+    margin-left: 10px;
+}
+
+.extra-space {
+    height: 100px;  /* Altura do espaço extra */
+}
+
+@media (max-width: 576px) {
+    .rounded-circle {
+        width: 80px;
+        height: auto;  /* Mantém a proporção correta no mobile */
+    }
+    
+    .actions {
+        flex-direction: column;  /* Botões empilhados verticalmente */
+        gap: 15px;  /* Espaço maior entre os botões no mobile */
+        align-items: stretch;  /* Garantir que os botões ocupem a largura total */
+    }
+
+    .actions .btn {
+        width: 100%;  /* Ambos os botões ocupam 100% da largura do contêiner */
+        display: block;  /* Garante que o botão ocupe a largura total */
+    }
+
+}
