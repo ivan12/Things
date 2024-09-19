@@ -40,7 +40,7 @@ window.onload = function () {
     loadFromFirebase();
 };
 
-// Save on Firebase
+// Save / Edit item in Firebase
 function saveToFirebase(todo, id = null) {
     if (id) {
         // Edit Item
@@ -49,11 +49,11 @@ function saveToFirebase(todo, id = null) {
             .ref('todos/' + id)
             .set(todo)
             .then(() => {
-                console.log('Dados editados no Firebase');
+                console.log('Edited in firebase successfully!');
                 loadFromFirebase();
             })
             .catch(error => {
-                console.error('Erro ao editar os dados:', error);
+                console.error('Error edit in Firebase:', error);
             });
     } else {
         // Create new Item
@@ -62,13 +62,27 @@ function saveToFirebase(todo, id = null) {
             .ref('todos/')
             .push(todo)
             .then(() => {
-                console.log('Dados salvos no Firebase');
+                console.log('Saved in firebase successfully!');
                 loadFromFirebase();
             })
             .catch(error => {
-                console.error('Erro ao salvar os dados:', error);
+                console.error('Error save in Firebase:', error);
             });
     }
+}
+
+// Delete item in Firebase
+function deleteFromFirebase(id) {
+    firebase
+        .database()
+        .ref('todos/' + id)
+        .remove()
+        .then(() => {
+            console.log('Deleted in Firebase successfully!');
+        })
+        .catch(error => {
+            console.error('Error delete in Firebase:', error);
+        });
 }
 
 // Load items from Firebase
@@ -198,20 +212,6 @@ function saveItem() {
         editIndex = null; // Reset index edit
         editModal.hide();
     }
-}
-
-// Delete item on Firebase
-function deleteFromFirebase(id) {
-    firebase
-        .database()
-        .ref('todos/' + id)
-        .remove()
-        .then(() => {
-            console.log('Item excluído do Firebase');
-        })
-        .catch(error => {
-            console.error('Erro ao excluir o item:', error);
-        });
 }
 
 // Utils
