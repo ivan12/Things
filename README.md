@@ -21,3 +21,12 @@ const firebaseConfig = {
     appId: 'YOUR_APP_ID', 
 };
 ```
+
+## ☕ Buying me a coffee
+
+If you enjoy this project and would like to support its development, consider buying me a coffee!  
+Every coffee helps turn ideas into code, games, and new features. 💛
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support-orange?style=for-the-badge&logo=buy-me-a-coffee)](https://buymeacoffee.com/amorimivan1)
+
+---
