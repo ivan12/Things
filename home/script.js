@@ -34,6 +34,23 @@ const iconList = [
     'bi bi-tv-fill',
 ];
 
+// Category icon mapping - Exact icons from preview image
+const categoryIcons = {
+    'Movies': 'bi bi-camera-reels-fill',        // Film reel icon
+    'Books': 'bi bi-book-half',                 // Open book icon
+    'Series': 'bi bi-tv-fill',                  // TV icon
+    'Games': 'bi bi-controller',                // Game controller
+    'Animes': 'bi bi-person-bounding-box',      // Anime character
+    'Notes': 'bi bi-file-earmark-text-fill',    // Document icon
+    'Collectibles': 'bi bi-gem',                // Diamond/gem icon
+    '': 'bi bi-folder-fill'                     // Default folder
+};
+
+// Get icon for category
+function getCategoryIcon(category) {
+    return categoryIcons[category] || 'bi bi-folder-fill';
+}
+
 // Initialize vars DOM
 const categoriesButton = document.getElementById('categories-btn');
 const categoriesModal = new bootstrap.Modal(document.getElementById('categoriesModal'));
@@ -50,6 +67,13 @@ const todoList = document.getElementById('todo-list');
 const usersButton = document.getElementById('users-btn');
 const usersList = document.getElementById('usersList');
 const usersModal = new bootstrap.Modal(document.getElementById('usersModal'));
+const navHome = document.getElementById('nav-home');
+const navCategories = document.getElementById('nav-categories');
+const navUsers = document.getElementById('nav-users');
+const navCreate = document.getElementById('nav-create');
+const navLabel = document.getElementById('mobile-nav-label');
+let lastNavTarget = 'home';
+let modalResetTimer = null;
 
 // Set limit characters
 itemTitle.setAttribute('maxlength', MAX_CHARACTERS_TITLE);
@@ -58,7 +82,8 @@ itemDescription.setAttribute('maxlength', MAX_CHARACTERS);
 // Authentication observer
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
-        window.location.href = '/things/';
+        // Handled by utils.js
+        console.log('User check in script.js: not logged in');
     }
 });
 
@@ -68,7 +93,8 @@ logoutBtn.addEventListener('click', () => {
         .auth()
         .signOut()
         .then(() => {
-            window.location.href = '/things/';
+            // Handled by utils.js
+            console.log('Signed out');
         })
         .catch(error => {
             console.error('Error signing out:', error);
@@ -133,6 +159,8 @@ function loadFromFirebase(userId = null, reloadCategories = true) {
 }
 
 function renderCategoriesFolders() {
+    categorieFolderSelected = '';
+    lastNavTarget = 'home';
     const categoryMap = {};
 
     // Group items by category
@@ -162,12 +190,21 @@ function renderCategoriesFolders() {
     Object.keys(categoryMap).forEach(category => {
         const folder = document.createElement('div');
         folder.classList.add('category-folder', 'text-center');
+        folder.setAttribute('data-category', category);
 
+        const iconClass = getCategoryIcon(category);
+        const count = categoryMap[category].length;
         folder.innerHTML = `
-            <div class="folder-icon mb-2">
-                <i class="bi bi-folder-fill"></i>
+            <div class="folder-container">
+                <span class="folder-count">${count}</span>
+                <div class="folder-bg">
+                    <i class="bi bi-folder-fill"></i>
+                </div>
+                <div class="folder-icon-overlay">
+                    <i class="${iconClass}"></i>
+                </div>
             </div>
-            <h5>${category ? category : 'No Category'} (${categoryMap[category].length} items)</h5>
+            <h5>${category ? category : 'No Category'}</h5>
         `;
 
         // Click event to show the items in the category
@@ -185,6 +222,7 @@ function renderCategoriesFolders() {
 function renderItemsByCategory(category) {
     let filteredTodos = todos.filter(todo => todo.category === category);
     categorieFolderSelected = category;
+    setActiveNav(null);
 
     // Clear the todoList container
     todoList.innerHTML = '';
@@ -235,20 +273,19 @@ function renderItemsByCategory(category) {
                     <h5>${todo.title}</h5>
                     <div class="rating mt-2" data-todo-id="${sanitizedTodoId}">
                     ${[1, 2, 3, 4, 5]
-                        .map(
-                            star =>
-                                `<span class="star" data-value="${star}" 
+                .map(
+                    star =>
+                        `<span class="star" data-value="${star}" 
                                  style="color: ${star <= (todo.rating ?? 3) ? 'orange' : 'gray'}">
                                  &#9733;
                            </span>`
-                        )
-                        .join('')}  
+                )
+                .join('')}  
                     </div>
                     <p class="desc-size">${todo.description}</p>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                        <span class="badge" style="${getBadgeColor(todo.category)}">${
-            todo.category
-        }</span>
+                        <span class="badge" style="${getBadgeColor(todo.category)}">${todo.category
+            }</span>
                         <button data-msg-id="${sanitizedTodoId}" class="btn btn-sm btn-default ms-auto" onclick="openChatModal('${sanitizedTodoId}')">
                             <i class="bi bi-chat-dots"></i> <span class="message-count">0</span>
                         </button>
@@ -524,7 +561,7 @@ function updateCurrentUserName(userId = null) {
 // Categories
 
 // Load categories from Firebase for the current user
-function loadCategories() {
+function loadCategories(refreshView = true) {
     const ref = firebase.database().ref(userPrefix + '_categories');
     ref.once('value', snapshot => {
         const data = snapshot.val();
@@ -539,7 +576,7 @@ function loadCategories() {
             saveCategories();
         }
         renderCategoriesList(); // Render the categories in the modal
-        renderCategoriesFolders();
+        if (refreshView) renderCategoriesFolders();
     });
 }
 
@@ -703,9 +740,100 @@ usersButton.addEventListener('click', () => {
 });
 
 document.getElementById('categories-btn').addEventListener('click', () => {
-    loadCategories(); // Load categories when the modal opens
+    // If inside a folder, don't reset the view; otherwise refresh categories grid
+    const refreshView = !categorieFolderSelected;
+    loadCategories(refreshView); // Load categories when the modal opens
     categoriesModal.show();
 });
+
+function setActiveNav(btn) {
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    btn?.classList.add('active');
+    if (navLabel && btn) {
+        navLabel.textContent = btn.querySelector('span')?.textContent || '';
+    }
+}
+
+function isAnyModalOpen() {
+    const modalIds = ['categoriesModal', 'usersModal', 'editModal'];
+    return modalIds.some(id => document.getElementById(id)?.classList.contains('show'));
+}
+
+function closeAllModals() {
+    try {
+        categoriesModal?.hide();
+        usersModal?.hide();
+        editModal?.hide();
+    } catch (e) {
+        console.warn('Close modals warning:', e);
+    }
+}
+
+navHome?.addEventListener('click', () => {
+    closeAllModals();
+    categorieFolderSelected = '';
+    renderCategoriesFolders();
+    setActiveNav(navHome);
+    lastNavTarget = 'home';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+navCategories?.addEventListener('click', () => {
+    closeAllModals();
+    categoriesButton.click();
+    setActiveNav(navCategories);
+    lastNavTarget = 'categories';
+    if (modalResetTimer) clearTimeout(modalResetTimer);
+});
+
+navUsers?.addEventListener('click', () => {
+    closeAllModals();
+    usersButton.click();
+    setActiveNav(navUsers);
+    lastNavTarget = 'users';
+    if (modalResetTimer) clearTimeout(modalResetTimer);
+});
+
+navCreate?.addEventListener('click', () => {
+    closeAllModals();
+    createButton.click();
+    setActiveNav(navCreate);
+    lastNavTarget = 'create';
+    if (modalResetTimer) clearTimeout(modalResetTimer);
+});
+
+// When modals close, reset nav selection (home if on root, none if inside a folder)
+function handleModalHide() {
+    if (modalResetTimer) {
+        clearTimeout(modalResetTimer);
+    }
+
+    if (categorieFolderSelected) {
+        setActiveNav(null);
+        return;
+    }
+
+    modalResetTimer = setTimeout(() => {
+        if (!categorieFolderSelected && !isAnyModalOpen()) {
+            setActiveNav(navHome);
+            lastNavTarget = 'home';
+        }
+    }, 3000);
+}
+
+document.getElementById('categoriesModal')?.addEventListener('hidden.bs.modal', handleModalHide);
+document.getElementById('usersModal')?.addEventListener('hidden.bs.modal', handleModalHide);
+document.getElementById('editModal')?.addEventListener('hidden.bs.modal', handleModalHide);
+
+function clearModalTimerOnShow() {
+    if (modalResetTimer) {
+        clearTimeout(modalResetTimer);
+    }
+}
+
+document.getElementById('categoriesModal')?.addEventListener('show.bs.modal', clearModalTimerOnShow);
+document.getElementById('usersModal')?.addEventListener('show.bs.modal', clearModalTimerOnShow);
+document.getElementById('editModal')?.addEventListener('show.bs.modal', clearModalTimerOnShow);
 
 window.addEventListener('load', function () {
     loadFromFirebase();
